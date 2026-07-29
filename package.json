@@ -9,7 +9,9 @@
     "lint": "eslint",
     "setup-db": "tsx scripts/setup-db.ts",
     "migrate": "tsx scripts/migrate.ts",
-    "dedup": "tsx scripts/dedup.ts"
+    "dedup": "tsx scripts/dedup.ts",
+    "download": "tsx scripts/download.ts",
+    "upload-to-db": "tsx scripts/upload-to-db.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

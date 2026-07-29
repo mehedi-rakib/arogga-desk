@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isLocalDataAvailable, searchLocal } from '@/lib/localProducts'
 import { connectDB } from '@/lib/mongodb'
 import ProductModel from '@/models/Product'
 
@@ -12,19 +13,24 @@ export async function GET(req: NextRequest) {
   const brand = (searchParams.get('_brand') ?? '').trim()
   const cat = (searchParams.get('_cat') ?? '').trim()
 
+  // 1. Local JSON files (fastest, no network)
+  if (isLocalDataAvailable()) {
+    const result = searchLocal({ search, brand, cat, page, perPage })
+    return NextResponse.json({ status: 'success', ...result })
+  }
+
+  // 2. MongoDB
   try {
     await connectDB()
-
-    // Check if we have data in MongoDB
     const count = await ProductModel.estimatedDocumentCount()
-
     if (count > 0) {
       return await searchMongo(search, page, perPage, count, brand, cat)
     }
   } catch {
-    // MongoDB unavailable — fall through to live proxy
+    // MongoDB unavailable — fall through
   }
 
+  // 3. Live API proxy
   return proxyLive(search, page, perPage)
 }
 
@@ -53,17 +59,12 @@ async function searchMongo(search: string, page: number, perPage: number, totalI
       .skip(skip)
       .limit(perPage)
       .lean(),
-    search
+    search || brand || cat
       ? ProductModel.countDocuments(query)
       : totalInDB,
   ])
 
-  return NextResponse.json({
-    status: 'success',
-    total,
-    data,
-    source: 'mongodb',
-  })
+  return NextResponse.json({ status: 'success', total, data, source: 'mongodb' })
 }
 
 async function proxyLive(search: string, page: number, perPage: number) {
@@ -83,7 +84,6 @@ async function proxyLive(search: string, page: number, perPage: number) {
       headers: {
         'Content-Type': res.headers.get('content-type') ?? 'application/json',
         'Cache-Control': 'no-store',
-        'Access-Control-Allow-Origin': '*',
       },
     })
   } catch (err) {
