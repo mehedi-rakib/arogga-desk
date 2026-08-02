@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --port=3090",
     "lint": "eslint",
     "setup-db": "tsx scripts/db/migrate.ts",
     "migrate": "tsx scripts/migrate.ts",
