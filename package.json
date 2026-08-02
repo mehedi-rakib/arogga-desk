@@ -7,16 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "setup-db": "tsx scripts/setup-db.ts",
+    "setup-db": "tsx scripts/db/migrate.ts",
     "migrate": "tsx scripts/migrate.ts",
-    "dedup": "tsx scripts/dedup.ts",
     "download": "tsx scripts/download.ts",
     "upload-to-db": "tsx scripts/upload-to-db.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
     "jose": "^6.2.4",
-    "mongoose": "^9.8.1",
+    "mysql2": "^3.23.2",
     "next": "16.2.12",
     "react": "19.2.4",
     "react-dom": "19.2.4"

@@ -174,7 +174,7 @@ async function main() {
     console.log('\n  ✔  All pages downloaded successfully.')
     console.log('\nNext steps:')
     console.log('  1. npm run dev  ← app now serves from local JSON files')
-    console.log('  2. npm run upload-to-db  ← push local files to MongoDB (optional)')
+    console.log('  2. npm run upload-to-db  ← push local files to MySQL (optional)')
   }
 }
 

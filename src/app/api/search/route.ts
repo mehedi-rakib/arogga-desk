@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isLocalDataAvailable, searchLocal } from '@/lib/localProducts'
-import { connectDB } from '@/lib/mongodb'
-import ProductModel from '@/models/Product'
+import { searchProducts, countProducts } from '@/lib/db/products'
 
 const PER_PAGE_DEFAULT = 24
 
@@ -19,52 +18,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ status: 'success', ...result })
   }
 
-  // 2. MongoDB
+  // 2. MySQL
   try {
-    await connectDB()
-    const count = await ProductModel.estimatedDocumentCount()
+    const count = await countProducts()
     if (count > 0) {
-      return await searchMongo(search, page, perPage, count, brand, cat)
+      const result = await searchProducts({ search, brand, cat, page, perPage })
+      return NextResponse.json({ status: 'success', ...result })
     }
   } catch {
-    // MongoDB unavailable — fall through
+    // MySQL unavailable — fall through
   }
 
   // 3. Live API proxy
   return proxyLive(search, page, perPage)
-}
-
-async function searchMongo(search: string, page: number, perPage: number, totalInDB: number, brand = '', cat = '') {
-  const skip = (page - 1) * perPage
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query: any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let sortOpt: any
-
-  if (search) {
-    query = { $text: { $search: search } }
-    sortOpt = { score: { $meta: 'textScore' }, p_trending_score: -1 }
-  } else {
-    query = {}
-    sortOpt = { p_trending_score: -1 }
-  }
-
-  if (brand) query.p_brand_name = { $regex: brand, $options: 'i' }
-  if (cat) query.p_cat_id = parseInt(cat, 10)
-
-  const [data, total] = await Promise.all([
-    ProductModel.find(query, search ? { score: { $meta: 'textScore' } } : {})
-      .sort(sortOpt)
-      .skip(skip)
-      .limit(perPage)
-      .lean(),
-    search || brand || cat
-      ? ProductModel.countDocuments(query)
-      : totalInDB,
-  ])
-
-  return NextResponse.json({ status: 'success', total, data, source: 'mongodb' })
 }
 
 async function proxyLive(search: string, page: number, perPage: number) {

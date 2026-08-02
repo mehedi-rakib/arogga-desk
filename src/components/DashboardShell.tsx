@@ -8,6 +8,8 @@ const NAV = [
   { href: '/dashboard/orders', label: 'Orders', icon: '↑' },
   { href: '/dashboard/brands', label: 'Brands', icon: '◈' },
   { href: '/dashboard/categories', label: 'Categories', icon: '⊟' },
+  { href: '/dashboard/sync', label: 'Sync', icon: '⟳' },
+  { href: '/dashboard/settings', label: 'Settings', icon: '⚙' },
 ]
 
 export default function DashboardShell({ children, email }: { children: React.ReactNode; email: string }) {

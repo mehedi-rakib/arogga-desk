@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(mysql -u root -p'R@2002kib' aroggo -e \"SELECT \\\\`key\\\\`, \\\\`value\\\\` FROM settings WHERE \\\\`key\\\\`='maintenance_mode';\")"
     ]
   }
 }
