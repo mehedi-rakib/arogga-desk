@@ -10,7 +10,8 @@
     "setup-db": "tsx scripts/db/migrate.ts",
     "migrate": "tsx scripts/migrate.ts",
     "download": "tsx scripts/download.ts",
-    "upload-to-db": "tsx scripts/upload-to-db.ts"
+    "upload-to-db": "tsx scripts/upload-to-db.ts",
+    "seed-categories": "tsx scripts/seed-categories.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

@@ -382,6 +382,7 @@ export async function allCategories() {
     (RowDataPacket & {
       catId: number
       count: number
+      name: string | null
       types_concat: string | null
       totalOrders: number
       avgB2b: number
@@ -389,10 +390,12 @@ export async function allCategories() {
   >(
     `SELECT p.p_cat_id AS catId,
             COUNT(*) AS count,
+            MAX(c.mi_name) AS name,
             GROUP_CONCAT(DISTINCT p.p_type SEPARATOR '') AS types_concat,
             SUM(p.product_count_ordered) AS totalOrders,
             ROUND(AVG(${FIRST_VARIANT_B2B}), 2) AS avgB2b
      FROM products p
+     LEFT JOIN categories c ON c.mi_cat_id = p.p_cat_id
      WHERE p.p_cat_id IS NOT NULL AND p.p_cat_id > 0
      GROUP BY p.p_cat_id
      ORDER BY count DESC`
@@ -400,6 +403,7 @@ export async function allCategories() {
   return rows.map(r => ({
     catId: r.catId,
     count: r.count,
+    name: r.name ?? '',
     types: (r.types_concat ?? '').split('').filter(Boolean),
     totalOrders: r.totalOrders ?? 0,
     avgB2b: r.avgB2b ?? 0,

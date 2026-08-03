@@ -5,9 +5,10 @@ import { Product, SortMode } from '@/types/product'
 import { analyse, mgClass, productImage, bdt, pct } from '@/lib/pricing'
 import ProductCard from './ProductCard'
 import ProductDetail from './ProductDetail'
+import SearchableSelect, { SelectOption } from './SearchableSelect'
 
 interface BrandOption { name: string; count: number }
-interface CatOption { catId: number; count: number; types: string[] }
+interface CatOption { catId: number; count: number; name: string; types: string[] }
 
 function sortRows(rows: Product[], mode: SortMode): Product[] {
   const r = [...rows]
@@ -95,6 +96,23 @@ export default function DashboardProducts() {
   const closeDetail = () => { setDrawerOpen(false); document.body.style.overflow = '' }
   const pages = Math.max(1, Math.ceil(total / per))
 
+  // Build option lists for SearchableSelect
+  const brandOptions: SelectOption[] = brands.map(b => ({
+    value: b.name,
+    label: b.name,
+    count: b.count,
+  }))
+
+  const catOptions: SelectOption[] = cats.map(c => ({
+    value: String(c.catId),
+    label: c.name ? c.name : `Cat ${c.catId}`,
+    count: c.count,
+  }))
+
+  // Map catId → name for ProductDetail
+  const catNameMap = new Map(cats.map(c => [c.catId, c.name]))
+  const selectedCatName = selected?.p_cat_id ? catNameMap.get(selected.p_cat_id) ?? '' : ''
+
   return (
     <>
       <div>
@@ -127,24 +145,22 @@ export default function DashboardProducts() {
           </div>
 
           {/* Brand filter */}
-          <select
+          <SearchableSelect
+            options={brandOptions}
             value={brand}
-            onChange={e => { setBrand(e.target.value); setPage(1); doSearch(query, 1, per, e.target.value, cat) }}
-            style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 10, padding: '0 12px', fontSize: 13, color: brand ? 'var(--text)' : 'var(--muted)', minWidth: 160 }}
-          >
-            <option value="">All Brands</option>
-            {brands.map(b => <option key={b.name} value={b.name}>{b.name} ({b.count})</option>)}
-          </select>
+            onChange={val => { setBrand(val); setPage(1); doSearch(query, 1, per, val, cat) }}
+            placeholder="All Brands"
+            searchPlaceholder="Search brands…"
+          />
 
           {/* Category filter */}
-          <select
+          <SearchableSelect
+            options={catOptions}
             value={cat}
-            onChange={e => { setCat(e.target.value); setPage(1); doSearch(query, 1, per, brand, e.target.value) }}
-            style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 10, padding: '0 12px', fontSize: 13, color: cat ? 'var(--text)' : 'var(--muted)', minWidth: 160 }}
-          >
-            <option value="">All Categories</option>
-            {cats.map(c => <option key={c.catId} value={String(c.catId)}>Cat {c.catId} ({c.count})</option>)}
-          </select>
+            onChange={val => { setCat(val); setPage(1); doSearch(query, 1, per, brand, val) }}
+            placeholder="All Categories"
+            searchPlaceholder="Search categories…"
+          />
 
           {/* Clear */}
           {(query || brand || cat) && (
@@ -220,7 +236,7 @@ export default function DashboardProducts() {
 
       {/* Drawer */}
       <aside style={{ position: 'fixed', top: 0, right: 0, height: '100%', width: 'min(760px,100%)', zIndex: 60, background: 'var(--bg)', borderLeft: '1px solid var(--line)', transform: drawerOpen ? 'none' : 'translateX(102%)', transition: 'transform .26s cubic-bezier(.32,.72,0,1)', overflowY: 'auto', overscrollBehavior: 'contain' }}>
-        {selected && <ProductDetail product={selected} onClose={closeDetail} />}
+        {selected && <ProductDetail product={selected} catName={selectedCatName} onClose={closeDetail} />}
       </aside>
     </>
   )

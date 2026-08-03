@@ -143,6 +143,7 @@ export function allCategories() {
     .map(([catId, v]) => ({
       catId,
       count: v.count,
+      name: '',
       types: Array.from(v.types),
       totalOrders: v.totalOrders,
       avgB2b: v.b2bCount > 0 ? Math.round((v.totalB2b / v.b2bCount) * 100) / 100 : 0,

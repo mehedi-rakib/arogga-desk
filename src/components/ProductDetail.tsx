@@ -5,6 +5,7 @@ import { analyse, gallery, bdt, pct } from '@/lib/pricing'
 
 interface Props {
   product: Product
+  catName?: string
   onClose: () => void
 }
 
@@ -24,7 +25,7 @@ const tile = (label: string, value: string, sub?: string, highlight?: boolean) =
   </div>
 )
 
-export default function ProductDetail({ product: p, onClose }: Props) {
+export default function ProductDetail({ product: p, catName, onClose }: Props) {
   const a = analyse(p)
   const v = a.v
   const pics = gallery(p)
@@ -69,7 +70,7 @@ export default function ProductDetail({ product: p, onClose }: Props) {
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', font: '500 10.5px/1 var(--mono)', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--dim)' }}>
             <span>★ {v.pv_average_rating ?? '—'} ({v.pv_total_rating ?? 0})</span>
             <span>unit {v.pu_base_unit_label || '—'}</span>
-            <span>cat {p.p_cat_id ?? '—'}</span>
+            <span>{catName ? catName : p.p_cat_id ? `cat ${p.p_cat_id}` : '—'}</span>
           </div>
         </div>
         <button
