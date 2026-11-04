@@ -2,7 +2,17 @@
   "permissions": {
     "allow": [
       "Bash(npm install *)",
-      "Bash(mysql -u root -p'R@2002kib' aroggo -e \"SELECT \\\\`key\\\\`, \\\\`value\\\\` FROM settings WHERE \\\\`key\\\\`='maintenance_mode';\")"
+      "Bash(mysql -u root -p'R@2002kib' aroggo -e \"SELECT \\\\`key\\\\`, \\\\`value\\\\` FROM settings WHERE \\\\`key\\\\`='maintenance_mode';\")",
+      "Bash(npm run *)",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(pkill -f \"npm run dev\")",
+      "Bash(curl -s http://localhost:3000/dashboard/products)",
+      "Bash(kill 191616)",
+      "Bash(curl -s http://localhost:3000/api/search -H \"Cookie: auth_token=test\")",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(chmod +x /home/mehedi/projects/office/arogga-desk/debug.sh)"
     ]
   }
 }

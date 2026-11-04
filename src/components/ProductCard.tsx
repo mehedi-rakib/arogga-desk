@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { Product } from '@/types/product'
 import { analyse, mgClass, productImage, bdt, pct } from '@/lib/pricing'
 
@@ -8,7 +9,7 @@ interface Props {
   onClick: () => void
 }
 
-export default function ProductCard({ product: p, onClick }: Props) {
+function ProductCard({ product: p, onClick }: Props) {
   const a = analyse(p)
   const img = productImage(p)
   const off = a.v.pv_b2b_discount_percent || 0
@@ -87,9 +88,9 @@ export default function ProductCard({ product: p, onClick }: Props) {
 
       {/* Body */}
       <div style={{ padding: '13px 14px 14px', display: 'flex', flexDirection: 'column', gap: 9, flex: 1 }}>
-        <div style={{ font: '500 10px/1 var(--mono)', letterSpacing: '.13em', textTransform: 'uppercase', color: 'var(--dim)', display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-          <span>{p.p_brand_name || p.p_type || '—'}</span>
-          <span>{unit}</span>
+        <div style={{ font: '500 10px/1 var(--mono)', letterSpacing: '.13em', textTransform: 'uppercase', color: 'var(--dim)', display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' }}>
+          <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>{p.p_brand_name || p.p_type || '—'}</span>
+          <span style={{ flexShrink: 0 }}>{unit}</span>
         </div>
 
         <div style={{ fontSize: 13.5, lineHeight: 1.4, fontWeight: 500, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: 38 }}>
@@ -128,3 +129,5 @@ export default function ProductCard({ product: p, onClick }: Props) {
     </button>
   )
 }
+
+export default React.memo(ProductCard)

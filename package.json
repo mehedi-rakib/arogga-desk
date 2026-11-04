@@ -5,13 +5,14 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start --port=3090",
+    "start": "next start --port=${PORT:-3090}",
     "lint": "eslint",
     "setup-db": "tsx scripts/db/migrate.ts",
     "migrate": "tsx scripts/migrate.ts",
     "download": "tsx scripts/download.ts",
     "upload-to-db": "tsx scripts/upload-to-db.ts",
-    "seed-categories": "tsx scripts/seed-categories.ts"
+    "seed-categories": "tsx scripts/seed-categories.ts",
+    "generate-secret": "node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
   },
   "dependencies": {
     "dotenv": "^17.4.2",
@@ -19,7 +20,8 @@
     "mysql2": "^3.23.2",
     "next": "16.2.12",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
