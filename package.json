@@ -15,6 +15,7 @@
     "generate-secret": "node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
     "jose": "^6.2.4",
     "mysql2": "^3.23.2",
