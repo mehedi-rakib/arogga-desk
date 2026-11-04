@@ -3,9 +3,28 @@ import { cookies } from 'next/headers'
 import { NextRequest } from 'next/server'
 
 const COOKIE = 'auth_token'
-const secret = new TextEncoder().encode(
-  process.env.AUTH_SECRET ?? 'fallback-dev-secret-change-in-production-32ch'
-)
+
+function getAuthSecret(): string {
+  const secret = process.env.AUTH_SECRET
+  if (!secret) {
+    const message = 'AUTH_SECRET environment variable is required'
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(message)
+    }
+    console.warn(
+      `⚠️  ${message} - using fallback for development only. Set AUTH_SECRET in production!`
+    )
+    return 'fallback-dev-secret-change-in-production-32ch'
+  }
+  if (secret.length < 32) {
+    console.warn(
+      '⚠️  AUTH_SECRET should be at least 32 characters for production security'
+    )
+  }
+  return secret
+}
+
+const secret = new TextEncoder().encode(getAuthSecret())
 
 export interface Session {
   email: string
