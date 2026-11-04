@@ -127,6 +127,7 @@ export default function DashboardProducts() {
         {
           query: query || undefined,
           brand: brand || undefined,
+          type: type || undefined,
         },
         (current, total) => {
           setExportProgress({ current, total })

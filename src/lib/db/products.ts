@@ -260,7 +260,7 @@ export async function getProductsByIds(ids: number[]): Promise<Product[]> {
 
 const FULLTEXT_COLS = 'p_name, p_name_bn, p_generic_name, p_brand_name'
 
-function buildWhere(search: string, brand: string, cat: string) {
+function buildWhere(search: string, brand: string, cat: string, type: string) {
   const conditions: string[] = []
   const params: unknown[] = []
 
@@ -276,6 +276,10 @@ function buildWhere(search: string, brand: string, cat: string) {
     conditions.push('p_cat_id = ?')
     params.push(parseInt(cat, 10))
   }
+  if (type) {
+    conditions.push('p_type = ?')
+    params.push(type)
+  }
 
   return {
     whereSql: conditions.length ? `WHERE ${conditions.join(' AND ')}` : '',
@@ -287,16 +291,17 @@ export interface SearchOptions {
   search?: string
   brand?: string
   cat?: string
+  type?: string
   page?: number
   perPage?: number
 }
 
 export async function searchProducts(opts: SearchOptions) {
-  const { search = '', brand = '', cat = '', page = 1, perPage = 24 } = opts
+  const { search = '', brand = '', cat = '', type = '', page = 1, perPage = 24 } = opts
   const pool = getPool()
   const skip = (page - 1) * perPage
 
-  const { whereSql, whereParams } = buildWhere(search, brand, cat)
+  const { whereSql, whereParams } = buildWhere(search, brand, cat, type)
 
   const [countRows] = await pool.query<(RowDataPacket & { total: number })[]>(
     `SELECT COUNT(*) AS total FROM products ${whereSql}`,
@@ -479,15 +484,24 @@ async function upsertOne(conn: PoolConnection, doc: Record<string, unknown>): Pr
 
     // Tags: full replace (cheap, catalog tags are small lists)
     await conn.query('DELETE FROM product_tags WHERE p_id = ?', [pid])
+    const tagSet = new Set<string>()
     const tagRows: [number, string, string][] = []
     for (const t of (doc.p_product_tags as unknown[]) ?? []) {
-      if (t) tagRows.push([pid, 'tag', str(t)])
+      const tag = str(t)
+      if (tag && !tagSet.has(`tag:${tag}`)) {
+        tagSet.add(`tag:${tag}`)
+        tagRows.push([pid, 'tag', tag])
+      }
     }
     for (const t of (doc.p_product_internal_tags as unknown[]) ?? []) {
-      if (t) tagRows.push([pid, 'internal_tag', str(t)])
+      const tag = str(t)
+      if (tag && !tagSet.has(`internal_tag:${tag}`)) {
+        tagSet.add(`internal_tag:${tag}`)
+        tagRows.push([pid, 'internal_tag', tag])
+      }
     }
     if (tagRows.length) {
-      await conn.query('INSERT INTO product_tags (p_id, kind, tag) VALUES ?', [tagRows])
+      await conn.query('INSERT IGNORE INTO product_tags (p_id, kind, tag) VALUES ?', [tagRows])
     }
 
     // Product images: full replace
