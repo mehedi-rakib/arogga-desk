@@ -38,12 +38,13 @@ export interface LocalSearchOptions {
   search?: string
   brand?: string
   cat?: string
+  type?: string
   page?: number
   perPage?: number
 }
 
 export function searchLocal(opts: LocalSearchOptions) {
-  const { search = '', brand = '', cat = '', page = 1, perPage = 24 } = opts
+  const { search = '', brand = '', cat = '', type = '', page = 1, perPage = 24 } = opts
 
   let results = loadAll()
 
@@ -77,6 +78,10 @@ export function searchLocal(opts: LocalSearchOptions) {
   if (cat) {
     const catId = parseInt(cat, 10)
     results = results.filter(p => p.p_cat_id === catId)
+  }
+
+  if (type) {
+    results = results.filter(p => p.p_type === type)
   }
 
   const total = results.length

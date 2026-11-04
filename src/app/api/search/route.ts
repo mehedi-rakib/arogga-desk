@@ -11,10 +11,11 @@ export async function GET(req: NextRequest) {
   const search = (searchParams.get('_search') ?? '').trim()
   const brand = (searchParams.get('_brand') ?? '').trim()
   const cat = (searchParams.get('_cat') ?? '').trim()
+  const type = (searchParams.get('_type') ?? '').trim()
 
   // 1. Local JSON files (fastest, no network)
   if (isLocalDataAvailable()) {
-    const result = searchLocal({ search, brand, cat, page, perPage })
+    const result = searchLocal({ search, brand, cat, type, page, perPage })
     return NextResponse.json({ status: 'success', ...result })
   }
 
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
   try {
     const count = await countProducts()
     if (count > 0) {
-      const result = await searchProducts({ search, brand, cat, page, perPage })
+      const result = await searchProducts({ search, brand, cat, type, page, perPage })
       return NextResponse.json({ status: 'success', ...result })
     }
   } catch {
@@ -30,14 +31,16 @@ export async function GET(req: NextRequest) {
   }
 
   // 3. Live API proxy
-  return proxyLive(search, page, perPage)
+  return proxyLive(search, brand, type, page, perPage)
 }
 
-async function proxyLive(search: string, page: number, perPage: number) {
+async function proxyLive(search: string, brand: string, type: string, page: number, perPage: number) {
   const upstream = new URL('https://api.arogga.com/general/v3/search')
   upstream.searchParams.set('_page', String(page))
   upstream.searchParams.set('_perPage', String(perPage))
   if (search) upstream.searchParams.set('_search', search)
+  if (brand) upstream.searchParams.set('_brand', brand)
+  if (type) upstream.searchParams.set('_type', type)
 
   try {
     const res = await fetch(upstream.toString(), {

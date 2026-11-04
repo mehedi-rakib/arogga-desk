@@ -3,8 +3,8 @@ import { countProducts, upsertProducts } from '@/lib/db/products'
 
 const BASE_URL = 'https://api.arogga.com/general/v3/search'
 const PER_PAGE = 100
-const CAP = 900               // safety margin under the observed ~1,000-item pagination ceiling
-const MAX_TERM_LENGTH = 4     // hard stop on how deep a search term can be refined
+const CAP = 1000              // API pagination ceiling — branch before hitting it
+const MAX_TERM_LENGTH = 5     // hard stop on how deep a search term can be refined
 const REQUEST_DELAY_MS = 200  // pacing between upstream requests
 const WRITE_CONCURRENCY = 3
 const FETCH_RETRIES = 3
@@ -115,15 +115,19 @@ export async function POST(req: NextRequest) {
             addDocs(first.data)
             applyResult(await upsertProducts(first.data, WRITE_CONCURRENCY))
 
-            const pages = Math.min(Math.ceil(first.total / PER_PAGE), Math.ceil(CAP / PER_PAGE))
-            for (let p = 2; p <= pages && requests < maxRequests; p++) {
+            const maxPages = Math.ceil(CAP / PER_PAGE) + 1  // +1 to detect truncation
+            let lastPageHadData = true
+            for (let p = 2; p <= maxPages && lastPageHadData && requests < maxRequests; p++) {
               await sleep(REQUEST_DELAY_MS)
               try {
                 const json = await fetchSearch(term, p)
                 requests++
-                if (json.data.length === 0) break
-                addDocs(json.data)
-                applyResult(await upsertProducts(json.data, WRITE_CONCURRENCY))
+                if (json.data.length === 0) {
+                  lastPageHadData = false
+                } else {
+                  addDocs(json.data)
+                  applyResult(await upsertProducts(json.data, WRITE_CONCURRENCY))
+                }
               } catch {
                 break
               }
@@ -153,9 +157,17 @@ export async function POST(req: NextRequest) {
       })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
-      await send({ event: 'error', message })
+      try {
+        await send({ event: 'error', message })
+      } catch {
+        // Stream may already be closed
+      }
     } finally {
-      await writer.close()
+      try {
+        await writer.close()
+      } catch {
+        // Stream already closed — this is fine
+      }
     }
   })()
 

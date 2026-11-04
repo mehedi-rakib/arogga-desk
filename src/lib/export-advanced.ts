@@ -8,18 +8,20 @@ export interface ExportOptions {
 }
 
 export async function exportAllProductsToXLSX(
-  filters: { query?: string; brand?: string },
+  filters: { query?: string; brand?: string; type?: string },
   onProgress?: (current: number, total: number) => void
 ) {
   const {
     query = '',
     brand = '',
+    type = '',
   } = filters
 
   // Step 1: Get total count
   const params = new URLSearchParams()
   if (query) params.set('_search', query)
   if (brand) params.set('_brand', brand)
+  if (type) params.set('_type', type)
 
   const countRes = await fetch(`/api/search?${params}&_page=1&_perPage=1`)
   if (!countRes.ok) {
@@ -36,11 +38,13 @@ export async function exportAllProductsToXLSX(
   const allProducts: Product[] = []
   const perPage = 100 // Fetch 100 at a time
   const totalPages = Math.ceil(total / perPage)
+  let stoppedEarly = false
 
   for (let page = 1; page <= totalPages; page++) {
     const pageParams = new URLSearchParams()
     if (query) pageParams.set('_search', query)
     if (brand) pageParams.set('_brand', brand)
+    if (type) pageParams.set('_type', type)
     pageParams.set('_page', String(page))
     pageParams.set('_perPage', String(perPage))
 
@@ -49,11 +53,27 @@ export async function exportAllProductsToXLSX(
       throw new Error(`Failed to fetch products page ${page}: ${res.statusText}`)
     }
     const json = await res.json()
-    allProducts.push(...(json.data || []))
+    const pageData = json.data || []
+
+    // If we get 0 products, the API has stopped serving data
+    if (pageData.length === 0) {
+      stoppedEarly = true
+      break
+    }
+
+    allProducts.push(...pageData)
 
     if (onProgress) {
       onProgress(allProducts.length, total)
     }
+  }
+
+  // Warn if API stopped early
+  if (stoppedEarly) {
+    console.warn(
+      `Export stopped at page ${Math.ceil(allProducts.length / perPage)}: ` +
+      `API returned 0 products. Exported ${allProducts.length} of ~${total} products.`
+    )
   }
 
   // Step 3: Prepare data rows
@@ -134,9 +154,12 @@ export async function exportAllProductsToXLSX(
   const metaSheet = XLSX.utils.aoa_to_sheet([
     ['Export Metadata'],
     ['Export Date', new Date().toLocaleString()],
-    ['Total Products', allProducts.length],
+    ['Products Exported', allProducts.length],
+    ['Filtered Total', total],
+    ...(stoppedEarly ? [['Warning', 'Export stopped early - API limit reached']] : []),
     ...(query ? [['Search Query', query]] : []),
     ...(brand ? [['Brand Filter', brand]] : []),
+    ...(type ? [['Type Filter', type]] : []),
   ])
   XLSX.utils.book_append_sheet(wb, metaSheet, 'Metadata')
 
