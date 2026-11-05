@@ -1,8 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useParams } from 'next/navigation'
 
-export default function AdminPage({ params }: { params: { secret: string } }) {
+export default function AdminPage() {
+  const params = useParams()
+  const secret = params.secret as string
+
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [newPasswordConfirm, setNewPasswordConfirm] = useState('')
@@ -37,7 +41,7 @@ export default function AdminPage({ params }: { params: { secret: string } }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          secret: params.secret,
+          secret: secret,
           oldPassword,
           newPassword,
         }),
